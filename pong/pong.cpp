@@ -46,6 +46,10 @@ struct Ball{
 
 struct Block{
 	SDL_Rect rect;
+	
+	Block(){
+	
+	}
 
 	Block(int x, int y, int w, int h){
 		rect = {x, y, w, h};
@@ -67,12 +71,24 @@ struct Block{
 };
 
 struct Player{
-	Block top = {25, 0, 8, 8*3};
-	Block mid = {25, 8*3, 8, 8*3};
-	Block bot = {25, 8*3*2, 8, 8*3};
+	Block top;
+	Block mid;
+	Block bot;
 	
-	int speed = 20;
-	int atk_speed = 10;
+	int speed = 31;
+	int atk_speed = 3;
+
+	int up;
+	int down;
+
+	Player(int x, int y, int up, int down){
+		top = {x, y, 8, 8*3};
+		mid = {x, y+8*3, 8, 8*3};
+		bot = {x, y+8*3*2, 8, 8*3};
+		
+		this->up = up;
+		this->down = down;
+	}
 	
 	void draw(SDL_Renderer* render){
 		top.draw(render);
@@ -86,14 +102,20 @@ struct Player{
 			ball.speed_y = 1;
 		}
 
-		if(mid.hit(ball.rect)){
+		else if(mid.hit(ball.rect)){
 			ball.speed_x *= -atk_speed;
 			ball.speed_y = 0;
 		}
 		
-		if(bot.hit(ball.rect)){
+		else if(bot.hit(ball.rect)){
 			ball.speed_x *= -atk_speed;
 			ball.speed_y = -1;
+		}
+		
+		if(ball.speed_x > atk_speed){
+			ball.speed_x = atk_speed;
+		}else if(ball.speed_x < -atk_speed){
+			ball.speed_x = -atk_speed;
 		}
 	}
 
@@ -106,13 +128,16 @@ struct Player{
 	void move(SDL_Event& event){
 		switch(event.type){
 			case SDL_KEYDOWN:
-				switch(event.key.keysym.sym){
-					case SDLK_w:
-						move(0, speed*-1);
-						break;
-					case SDLK_s:
-						move(0, speed);
-						break;
+				int key = event.key.keysym.sym;
+				
+				if(key == up){
+					move(0, speed*-1);
+					break;
+				}
+
+				if(key == down){
+					move(0, speed);
+					break;
 				}
 		}
 	}
@@ -131,20 +156,27 @@ int main(){
 	SDL_Event event;
 
 	Ball ball;
-	Player p1;
+
+	Player p1(25, ((600-(8*3*2))/2)-9, 'w', 's');
+	Player p2(799-25-8, ((600-(8*3*2))/2)-9, 'i', 'k');
 	
-	SDL_Rect left = {0, 0, 5, 600};
-	SDL_Rect right = {799, 0, 5, 600};
-	SDL_Rect top = {0, 0, 800, 5};
-	SDL_Rect bottom = {0, 599, 800, 5};
+	SDL_Rect left = {-5, 0, 5, 600};
+	SDL_Rect right = {799+4, 0, 5, 600};
+	SDL_Rect top = {0, -5, 800, 5};
+	SDL_Rect bottom = {0, 599+4, 800, 5};
 
 	while(!quit){
 		clear(render);
 
 		ball.draw(render);
+
 		p1.draw(render);
+		p2.draw(render);
 		
 		SDL_RenderPresent(render);
+	
+		p1.hit(ball);
+		p2.hit(ball);
 
 		if(ball.hit(left)){
 			ball.speed_x = 1;
@@ -161,13 +193,12 @@ int main(){
 		if(ball.hit(bottom)){
 			ball.speed_y = -1;
 		}
-	
-		p1.hit(ball);
 
 		ball.move();
 		
 		while(SDL_PollEvent(&event)){
-			p1.move(event);		
+			p1.move(event);
+			p2.move(event);	
 	
 			if(event.type == SDL_QUIT){
 				quit = true;
