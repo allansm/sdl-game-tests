@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+#include <sys/time.h>
+
 void clear(SDL_Renderer* render){
 	SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
 	SDL_RenderClear(render);
@@ -23,15 +25,49 @@ bool collide(SDL_Rect& r1, SDL_Rect& r2){
 	return false;
 }
 
+struct Elapse{
+	int start;
+	
+	int ms(){
+		struct timeval t;
+		
+		gettimeofday(&t, NULL);
+
+		return t.tv_sec * 1000 + t.tv_usec / 1000;
+	}
+	
+	Elapse(){
+		start = ms();
+	}
+	
+	int elapsed(){
+		return ms() - start;
+	}
+
+	bool elapsed(int time){
+		return elapsed() >= time;
+	}
+};
+
 struct Ball{
 	int speed_x = -1;
 	int speed_y = 0;
 
+	bool can_move = true;
+
+	Elapse timer;
+
 	SDL_Rect rect = {800/2 - 8, 600/2 - 8, 8, 8};
 
 	void move(){
-		rect.x+=speed_x;
-		rect.y+=speed_y;
+		if(can_move){
+			rect.x+=speed_x;
+			rect.y+=speed_y;
+		}else{
+			if(timer.elapsed(600)){
+				can_move = true;
+			}
+		}
 	}
 	
 	void draw(SDL_Renderer* render){
@@ -41,6 +77,16 @@ struct Ball{
 	
 	bool hit(SDL_Rect& rect){
 		return collide(this->rect, rect);
+	}
+	
+	void reset(){
+		speed_x *= -1;
+		speed_y = 0;
+		rect = {800/2 - 8, 600/2 - 8, 8, 8};
+
+		can_move = false;
+
+		timer = Elapse();
 	}
 };
 
@@ -180,10 +226,12 @@ int main(){
 
 		if(ball.hit(left)){
 			ball.speed_x = 1;
+			ball.reset();
 		}
 
 		if(ball.hit(right)){
 			ball.speed_x = -1;
+			ball.reset();
 		}
 
 		if(ball.hit(top)){
