@@ -11,6 +11,13 @@ void clear(SDL_Renderer* render){
 	SDL_RenderClear(render);
 }
 
+void lines(SDL_Renderer* render){
+	SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
+	SDL_RenderDrawLine(render, (800/2), 0, (800/2), 600);
+	SDL_RenderDrawLine(render, 0, 0, 800, 0);
+	SDL_RenderDrawLine(render, 0, 599, 800, 599);
+}
+
 bool collide(SDL_Rect& r1, SDL_Rect& r2){
 	if(r1.x < r2.x + r2.w){
 		if(r1.x + r1.w > r2.x){
@@ -57,7 +64,7 @@ struct Ball{
 
 	Elapse timer;
 
-	SDL_Rect rect = {800/2 - 8, 600/2 - 8, 8, 8};
+	SDL_Rect rect = {800/2 - 4, 600/2 - 4, 8, 8};
 
 	void move(){
 		if(can_move){
@@ -82,7 +89,8 @@ struct Ball{
 	void reset(){
 		speed_x *= -1;
 		speed_y = 0;
-		rect = {800/2 - 8, 600/2 - 8, 8, 8};
+
+		rect = {800/2 - 4, 600/2 - 4, 8, 8};
 
 		can_move = false;
 
@@ -121,11 +129,13 @@ struct Player{
 	Block mid;
 	Block bot;
 	
-	int speed = 31;
-	int atk_speed = 3;
+	int speed = 30;
+	int atk_speed = 4;
 
 	int up;
 	int down;
+	
+	Elapse timer;
 
 	Player(int x, int y, int up, int down){
 		top = {x, y, 8, 8*3};
@@ -143,19 +153,49 @@ struct Player{
 	}
 
 	void hit(Ball& ball){
+		struct P{
+			Ball& ball;
+			Elapse& timer;
+		};
+		
+		P p = {ball, timer};
+		
+		auto hit_power = [&p](int min, int max){
+			Ball& ball = p.ball;
+			Elapse timer = p.timer;
+
+			if(ball.speed_x >= 1 || ball.speed_x <= -1){
+				if(timer.elapsed() % 2 == 0){
+					ball.speed_x = ball.speed_x > 0 ? ball.speed_x+max : ball.speed_x-max;
+				}else{
+					auto tmp = ball.speed_x > 0 ? ball.speed_x-min : ball.speed_x+min;
+
+					if(tmp != 0){
+						ball.speed_x = tmp;
+					}
+				}
+			}
+		};
+
 		if(top.hit(ball.rect)){
-			ball.speed_x *= -atk_speed;
+			ball.speed_x *= -1;
 			ball.speed_y = 1;
+
+			hit_power(1, 2);
 		}
 
 		else if(mid.hit(ball.rect)){
-			ball.speed_x *= -atk_speed;
+			ball.speed_x *= -1;
 			ball.speed_y = 0;
+
+			hit_power(1, 2);
 		}
 		
 		else if(bot.hit(ball.rect)){
-			ball.speed_x *= -atk_speed;
+			ball.speed_x *= -1;
 			ball.speed_y = -1;
+			
+			hit_power(1, 2);
 		}
 		
 		if(ball.speed_x > atk_speed){
@@ -218,6 +258,8 @@ int main(){
 
 		p1.draw(render);
 		p2.draw(render);
+
+		lines(render);
 		
 		SDL_RenderPresent(render);
 	
