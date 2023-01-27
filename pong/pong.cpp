@@ -19,10 +19,10 @@ void lines(SDL_Renderer* render){
 }
 
 bool collide(SDL_Rect& r1, SDL_Rect& r2){
-	if(r1.x < r2.x + r2.w){
-		if(r1.x + r1.w > r2.x){
-			if(r1.y < r2.y + r2.h){
-				if(r1.y + r1.h > r2.y){
+	if(r1.x <= r2.x + r2.w){
+		if(r1.x + r1.w >= r2.x){
+			if(r1.y <= r2.y + r2.h){
+				if(r1.y + r1.h >= r2.y){
 					return true;
 				}
 			}
@@ -246,10 +246,15 @@ int main(){
 	Player p1(25, ((600-(8*3*2))/2)-9, 'w', 's');
 	Player p2(799-25-8, ((600-(8*3*2))/2)-9, 'i', 'k');
 	
+	int p1_score = 0;
+	int p2_score = 0;
+	
 	SDL_Rect left = {-5, 0, 5, 600};
 	SDL_Rect right = {799+4, 0, 5, 600};
 	SDL_Rect top = {0, -5, 800, 5};
 	SDL_Rect bottom = {0, 599+4, 800, 5};
+
+	std::cout << "\nstarting...\n\n";
 
 	while(!quit){
 		clear(render);
@@ -269,11 +274,19 @@ int main(){
 		if(ball.hit(left)){
 			ball.speed_x = 1;
 			ball.reset();
+			
+			p2_score++;
+			
+			std::cout << "SCORE P1: " << p1_score << " P2: " << p2_score << "\n\n";
 		}
 
 		if(ball.hit(right)){
 			ball.speed_x = -1;
 			ball.reset();
+			
+			p1_score++;
+
+			std::cout << "SCORE P1: " << p1_score << " P2: " << p2_score << "\n\n";
 		}
 
 		if(ball.hit(top)){
