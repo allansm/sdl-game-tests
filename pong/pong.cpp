@@ -206,9 +206,13 @@ struct Player{
 	}
 
 	void move(int x, int y){
-		top.move(x, y);
-		mid.move(x, y);
-		bot.move(x, y);
+		int block_size = 8*3*3;
+
+		if(top.rect.y+y > -speed && top.rect.y+y < 600-block_size+speed){
+			top.move(x, y);
+			mid.move(x, y);
+			bot.move(x, y);
+		}
 	}
 	
 	void move(SDL_Event& event){
